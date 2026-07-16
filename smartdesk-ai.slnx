@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Éléments de solution/">
-    <File Path="docs/README.md" />
+    <File Path="README.md" />
   </Folder>
-  <Folder Name="/Éléments de solution/Docs/" />
+  <Folder Name="/Éléments de solution/docs/" />
 </Solution>
