@@ -3,7 +3,7 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/Éléments de solution/docs/">
-    <File Path="CahierDesChargesFonctionnel.md" />
+    <File Path="docs/CahierDesChargesFonctionnel.md" />
   </Folder>
   <Folder Name="/Éléments de solution/docs/images/" />
 </Solution>
