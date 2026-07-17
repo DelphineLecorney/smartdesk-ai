@@ -16,7 +16,7 @@ Ce dépôt documente l'intégralité du cycle de conception : cahier des charges
 
 | Document | Contenu |
 |---|---|
-| [`docs/cahierDesChargesFonctionnel.md`](docs/cahierDesChargesFonctionnel.md) | Cahier des charges fonctionnel : contexte, personas, périmètre, exigences, MVP/roadmap |
+| [`docs/CahierDesChargesFonctionnel.md`](docs/CahierDesChargesFonctionnel.md) | Cahier des charges fonctionnel : contexte, personas, périmètre, exigences, MVP/roadmap |
 
 ## Stack technique
 
