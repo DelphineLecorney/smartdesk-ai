@@ -11,6 +11,7 @@ Version 1.0 (juillet 2026)
 1. Contexte & Objectifs Business
 2. Personas & Parcours Utilisateurs
 3. Périmètre Fonctionnel
+4. Règles de Gestion & Cas Limites
 
 ---
 
@@ -87,3 +88,14 @@ Version 1.0 (juillet 2026)
 - **Dégradation gracieuse** : si le service IA est indisponible ou timeout, le ticket reste utilisable normalement en mode manuel (l'IA ne doit jamais être un point de blocage).
 
 ---
+
+## 4. Règles de gestion & cas limites
+
+- **Réouverture d'un ticket clôturé** : autorisée dans les 7 jours suivant la clôture. Au-delà, le client doit créer un nouveau ticket référençant l'ancien.
+- **Désactivation d'un compte agent avec tickets non résolus** : ses tickets sont automatiquement réassignés vers la file d'attente non assignée du tenant (le statut du ticket n'est pas modifié, seule l'assignation change). Un enregistrement d'audit est créé : `"Ticket désassigné suite à la désactivation de {agent}"`.
+- **Un tenant qui dépasse son quota de tickets/mois** : la création de tickets reste possible sans limitation, seul le traitement IA est désactivé jusqu'au renouvellement du quota, cohérent avec le principe que l'IA ne doit jamais être bloquante pour le service. Le client est informé du dépassement.
+- **Concurrence** : deux agents ouvrent ou modifient le même ticket en même temps -> verrouillage optimiste (colonne `RowVersion`, `ConcurrencyToken` côté EF Core). Le second agent à sauvegarder reçoit une erreur explicite et doit recharger le ticket avant de réessayer. Un indicateur de présence en temps réel (SignalR) sera mis pour la V3.
+- **Latence IA** : timeout de 10 secondes de l'appel au LLM avec un retry automatique de 2 secondes avant abandon. En cas d'échec définitif, le ticket reste utilisable en mode manuel (sans catégorie ou sentiment IA) et un enregistrement d'audit `"Analyse IA échouée pour ce ticket"` est créé pour permettre le monitoring du taux d'échec.
+- **Langue** : mono-langue pour la V1, français, pas de détection de langue ni de traduction, la suggestion de réponse est toujours générée en français. Le support multilingue est pour la V3.
+- **RGPD et droit à l'oubli** : anonymisation, pas suppression. Le contenu du ticket (`Subject`, `Message.Content`) reste en base pour l'historique et les statistiques, les données identifiantes du client (`Email`, `nom`) sont remplacées par des valeurs génériques. Le compte `User` passe au statut distinct `Anonymized` (voir `UserStatus`), différent de `Deactivated` pour ne pas confondre une désactivation classique avec une demande RGPD. Un enregistrement d'audit trace l'opération (date, demandeur).
+- **Multi-tenant + IA partagée** : le traitement IA repose sur un LLM stateless, accédé via une abstraction (`IAIAnalysisService`) permettant de changer de fournisseur sans impact sur le reste du système, choix motivé à la fois par une bonne pratique d'architecture et par une contrainte budgétaire réelle (fournisseurs gratuits, locaux comme Ollama ou Mistral en phase de développement, projet mené sans budget). Aucun risque de fuite d'apprentissage entre tenants (modèle figé et pas de mémoire persistante). Le contenu envoyé au LLM se limite strictement au ticket concerné, jamais d'historique cross-tenant. Si un fournisseur externe est utilisé, il sera encadré et détaillé dans nos CGU.
