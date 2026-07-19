@@ -12,6 +12,10 @@ Version 1.0 (juillet 2026)
 2. Personas & Parcours Utilisateurs
 3. Périmètre Fonctionnel
 4. Règles de Gestion & Cas Limites
+5. Exigences Non-fonctionnelles
+6. Modèle de données (vue conceptuelle)
+7. Contraintes Techniques & Architecture
+8. Découpage MVP / Roadmap
 
 ---
 
@@ -40,7 +44,7 @@ Version 1.0 (juillet 2026)
 | **Ismaël** | Agent de support | Résoudre un maximum de tickets avec qualité | Doit lire chaque ticket en entier avant de savoir quoi répondre |
 | **Philippe** | Client final | Obtenir une réponse rapide à son problème | Ne sait jamais où est son ticket, doit relancer par email |
 
-### 2.2 User Stories (je le remplirais au fur et à mesure)
+### 2.2 User Stories
 
 **Module A :  Utilisateurs & Multi-tenancy**
 - En tant qu'Administratrice client, je veux inviter un nouvel agent par email, pour qu'il rejoigne mon espace sans que j'aie à créer son mot de passe.
@@ -99,3 +103,53 @@ Version 1.0 (juillet 2026)
 - **Langue** : mono-langue pour la V1, français, pas de détection de langue ni de traduction, la suggestion de réponse est toujours générée en français. Le support multilingue est pour la V3.
 - **RGPD et droit à l'oubli** : anonymisation, pas suppression. Le contenu du ticket (`Subject`, `Message.Content`) reste en base pour l'historique et les statistiques, les données identifiantes du client (`Email`, `nom`) sont remplacées par des valeurs génériques. Le compte `User` passe au statut distinct `Anonymized` (voir `UserStatus`), différent de `Deactivated` pour ne pas confondre une désactivation classique avec une demande RGPD. Un enregistrement d'audit trace l'opération (date, demandeur).
 - **Multi-tenant + IA partagée** : le traitement IA repose sur un LLM stateless, accédé via une abstraction (`IAIAnalysisService`) permettant de changer de fournisseur sans impact sur le reste du système, choix motivé à la fois par une bonne pratique d'architecture et par une contrainte budgétaire réelle (fournisseurs gratuits, locaux comme Ollama ou Mistral en phase de développement, projet mené sans budget). Aucun risque de fuite d'apprentissage entre tenants (modèle figé et pas de mémoire persistante). Le contenu envoyé au LLM se limite strictement au ticket concerné, jamais d'historique cross-tenant. Si un fournisseur externe est utilisé, il sera encadré et détaillé dans nos CGU.
+
+## 5. Exigences Non-fonctionnelles
+
+| Catégorie | Exigence |
+|---|---|
+| **Performance** | Temps de réponse API < 300ms hors appel IA, traitement IA asynchrone, non bloquant pour l'utilisateur |
+| **Sécurité** | Authentification OIDC, autorisation par claims incluant le `TenantId`, chiffrement des données sensibles au repos, protection contre l'IDOR (accès direct par ID) |
+| **Disponibilité** | Cible 99% en environnement de démo, retry policy sur les appels RabbitMQ/IA avec backoff exponentiel |
+| **Scalabilité** | Architecture stateless côté API pour permettre un scaling horizontal |
+| **Conformité RGPD** | Anonymisation possible d'un client final, export de ses données sur demande, durée de rétention documentée |
+| **Observabilité** | Logs structurés et traces distribués via .NET Aspire, corrélation par `TenantId` + `TicketId` |
+| **Testabilité** | Couverture cible sur le Domain et l'Application layer (Clean Architecture), tests d'intégration dédiés à l'isolation multi-tenant |
+| **Accessibilité** | Portail client conforme aux bases WCAG (contrastes, navigation clavier) |
+
+---
+
+## 6. Modèle de données (vue conceptuelle)
+
+Entités principales et relations clés (le détail des colonnes sera affiné en phase de conception technique) :
+
+- **Tenant** (1) -> (N) **User** : chaque `User` porte un `TenantId` et un `Role`.
+- **Tenant** (1) -> (N) **Ticket** : chaque `Ticket` porte un `TenantId` (filtré via Global Query Filter EF Core).
+- **Ticket** (1) -> (N) **Message** : chaque `Message` a un flag `IsInternalNote`.
+- **Ticket** (1) -> (0..1) **AIAnalysis** : catégorie, sentiment, priorité suggérée, réponse suggérée, statut de la décision agent (acceptée, modifiée ou rejetée).
+- **Ticket** (1) -> (N) **Attachment**.
+- **Ticket** (1) -> (N) **AuditLogEntry** : traçabilité des changements de statut, d'assignation.
+
+> POint d'attention architecture : le `TenantId` doit être injecté depuis le contexte d'authentification (claims), jamais depuis une valeur envoyée par le client dans la requête sinon l'isolation multi-tenant est cassée par design.
+
+---
+
+## 7. Contraintes Techniques & Architecture
+
+- **Backend** : .NET 10 (Web API, C#).
+- **Frontend** : Blazor WebAssembly.
+- **Base de données** : SQL Server, stratégie multi-tenant "Single Database, Discriminator Column" via Global Query Filters EF COre.
+- **Architecture logicielle** : Clean Architecture (Domain, Application, Infrastructure, Presentation) + CQRS (MediatR).
+- **Messagerie asynchrone** : RabbitMQ pour découpler le traitement IA de la création de ticket.
+- **Orchestration & Observabilité** : .NET Aspire (conteneurs, logs, traces centralisées).
+- **IA** : appel à un LLM externe (API OpenAI, Ollama, un modèle léger pour la démo, encapsulé derrière une interface `IAInalysisService` pour rester substituable et testable (mocks en tests unitaires).
+
+---
+
+## 8. Découpage MVP / Roadmap
+
+**MVP (livrable présentable)** : 
+- Module A : cas d'usage retenus : `InviteUser`, `ActivateUser`, `DeactivateUser` (avec réassignation des tickets), `GetUsersByTenant`, `GetUserById`, authentification (`Login`). La création de tenant (`CreateTenant`) sera en V2, la V1 étant un MVP, les tenants de test sont créés directement en base (seed).
+- Module B complet (cycle de vie, priorités, fil de discussion, notes internes).
+- Module C réduit : catégorisation automatique uniquement (pas encore sentiment ni suggestion de réponse).
+- Tests d'intégration sur l'isolation multi-tenant.
