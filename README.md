@@ -27,4 +27,34 @@ Ce dépôt documente l'intégralité du cycle de conception : cahier des charges
 - **Orchestration** .NET Aspire (conteneurs, logs, traces)
 - **Tests** xUnit dont une suite dédiée à la non-régression sur l'isolation multi-tenant
 
+## Points d'architecture
 
+- **Isolation multi-tenant réelle** : le `TenantId` d'un utilisateur provient exclusivement de ses claims d'authentification, jamais d'un paramètre de requête, testé par des scénarios d'intégration qui tentent explicitement l'accès croisé entre tenants.
+- **IA non bloquante** : la catégorisation ou l'analyse de sentiment se fait de manière asynchrone via RabbitMQ. Si le service IA est indisponible, le ticket reste pleinement en mode manuel.
+- **Décisions documentées** : chaque choix technique significatif est tracé dans un ADR (voir `docs/adr/`), avec les alternatives écartées et pourquoi.
+
+## Etat du projet
+
+En cours de développement, voir le découpage MVP/V2/V3 dans le [Cahier des charges](docs/CahierDesChargesFonctionnel.md#8-decoupage-mvp--roadmap).
+
+- [ ] Module A : Utilisateurs & Multi-Tenancy
+- [ ] Module B : Coeur métier (Ticketing)
+- [ ] Module C : Copilote IA (catégorisation)
+- [ ] Tests d'intégration isolation multi-tenant
+- [ ] Déploiement de démo
+
+## Lancer le projet en local
+
+```bash
+git clone https://github.com/<votre-user>/smartdesk-ai.git
+cd smartdesk-ai
+dotnet restore
+# Orchestration complète (API + DB + RabbitMQ) via Aspire
+dotnet run --project aspire/SmartDeskAI.AppHost
+```
+
+## Auteur
+
+Développeuse en reconversion vers le développement .NET/C#.
+
+Ce projet illustre une approche de conception complète, du cahier des charges au code plutôt qu'un exercice technique isolé.
