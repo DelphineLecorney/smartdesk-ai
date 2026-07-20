@@ -6,6 +6,7 @@
   <Folder Name="/Éléments de solution/docs/">
     <File Path="ConceptionTechnique.md" />
     <File Path="docs/CahierDesChargesFonctionnel.md" />
+    <File Path="docs/ConceptionTechnique.md" />
   </Folder>
   <Folder Name="/Éléments de solution/docs/images/" />
 </Solution>
