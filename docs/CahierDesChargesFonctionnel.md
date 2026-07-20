@@ -16,6 +16,8 @@ Version 1.0 (juillet 2026)
 6. Modèle de données (vue conceptuelle)
 7. Contraintes Techniques & Architecture
 8. Découpage MVP / Roadmap
+9. Risques & Mitigations
+10. Glossaire
 
 ---
 
@@ -153,3 +155,37 @@ Entités principales et relations clés (le détail des colonnes sera affiné en
 - Module B complet (cycle de vie, priorités, fil de discussion, notes internes).
 - Module C réduit : catégorisation automatique uniquement (pas encore sentiment ni suggestion de réponse).
 - Tests d'intégration sur l'isolation multi-tenant.
+
+**V2** :
+- Création de tenant par l'utilisateur (`CreateTenantCommand`), sans intervention manuelle en base.
+- Analyse de sentiment + ajustement de priorité.
+- Suggestion de réponse par l'IA.
+- Dashboard analytics pour l'administratrice client (taux de résolution, fiabilité IA).
+
+**V3** :
+
+- Portail client final en marque blanche (personnalisé à l'identité visuelle de chaque client).
+- Modifications temps réel (SignalR).
+- Export de rapports (PDF, Excel).
+
+---
+
+## 9. Riques & Mitigations
+
+| Risque | Mitigation |
+|---|---|
+| Fuite de données entre tenants (bug dans unQuery Filter)| Tests d'intégration systématiques, revue de code ciblée sur toute requête EF Core |
+| Dépendance forte à un service IA externe (coût, disponibilité) | Interface abstraite + mode dégradé fonctionnel sans IA |
+| Périmètre qui explose (feature creep) | Respect strict du découpage MVP/V2/V3 ci-dessus |
+| Projet solo, motivation sur la durée | Découpage en petis jalons livrables et démontrables |
+
+---
+
+## 10. Glossaire
+
+- **Tenant** : entreprise cliente du Saas, disposant d'un espace isolé.
+- **SLA** : Service Level Agreement, engagement de délai de traitement.
+- **Query Filter Global (EF Core)** : filtre automatique appliqué à toutes les requêtes pour restreindre les résultats au tenant courant.
+- **IDOR** : Insecure Direct Object Reference, faille où un utilisateur accède à une ressource d'un autre en devinant ou en modifiant un identifiant.
+
+---
