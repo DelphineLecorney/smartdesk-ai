@@ -17,7 +17,7 @@ Ce dépôt documente l'intégralité du cycle de conception : cahier des charges
 | Document | Contenu |
 |---|---|
 | [`docs/CahierDesChargesFonctionnel.md`](docs/CahierDesChargesFonctionnel.md) | Cahier des charges fonctionnel : contexte, personas, périmètre, exigences, MVP/roadmap |
-
+| [`docs/ConceptionTechnique.md`](docs/ConceptionTechnique.md) | Architecture (modèle C4), modèle de données, ADR, structure de solution |
 ## Stack technique
 
 - **Backend** .NET 10, C#, Clean Architecture, CQRS (MediatR)
