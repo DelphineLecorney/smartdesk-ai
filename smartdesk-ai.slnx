@@ -1,5 +1,4 @@
 <Solution>
-  <Folder Name="/adr/" />
   <Folder Name="/Éléments de solution/">
     <File Path=".gitignore" />
     <File Path="README.md" />
@@ -7,6 +6,14 @@
   <Folder Name="/Éléments de solution/docs/">
     <File Path="docs/CahierDesChargesFonctionnel.md" />
     <File Path="docs/ConceptionTechnique.md" />
+  </Folder>
+  <Folder Name="/Éléments de solution/docs/adr/">
+    <File Path="docs/adr/0001-multi-tenant-strategy.md" />
+    <File Path="docs/adr/0002-async-ai-processing.md" />
+    <File Path="docs/adr/0003-cqrs-mediatr.md" />
+    <File Path="docs/adr/0004-ai-graceful-degradation.md" />
+    <File Path="docs/adr/0005-optimistic-concurrency.md" />
+    <File Path="docs/adr/0006-ai-provider-abstraction.md" />
   </Folder>
   <Folder Name="/Éléments de solution/docs/images/" />
 </Solution>

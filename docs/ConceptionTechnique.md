@@ -190,68 +190,24 @@ Le `_currentTenantService.TenantId` doit provenir **exclusivement** des claims d
 ## 3. Architecture Decision Records (ADR)
 
 Un ADR documente une décision technique, son contexte et ses alternatives écartées.
-
-### ADR-001 : Stratégie multi-tenant, Single Database + Discriminator Column
-
-- **Statut** : Accepté
-- **Contexte** : besoin d'isoler les données de plusieurs entreprises clientes.
-- **Options considérées** :
-  - Option 1 : base de données dédiée par tenant (isolation maximale, coût opérationnel élevé)
-  - Option 2 : schéma dédié par tenant (isolation moyenne, complexité de migration)
-  - Option 3 : single database + colonne discriminante `TenantId` (isolation logique, coût faible)
-- **Décision** : option 3, via Global Query Filters EF Core.
-- **Conséquences** : nécessite une discipline stricte de tests d'intégration pour garantir qu'aucune requête ne contourne le filtre (ex : requêtes SQL brutes à proscrire ou à sécuriser manuellement).
-
-<hr style="width: 25%; margin: 50px auto;" />
-
-### ADR-002 : Traitement IA asynchrone via message broker
-
-- **Statut** : accepté.
-- **Contexte** : l'appel à un LLM externe peut prendre plusieurs secondes, il ne doit pas bloquer la création d'un ticket.
-- **Options considérées** :
-  - Option 1 : appel synchrone dans la requête HTTP (latence subie par l'utilisateur)
-  - Option 2 : background job in-process (`IHostedService`) sans broker (perte de messages si le process redémarre)
-  - Option 3 : message broker (RabbitMQ) + worker dédié
-- **Décision** : Option 3.
-- **Conséquences** : ajoute un composant d'infrastructure supplémentaire mais garantit la résilience (les messages non traités restent dans la queue) et la scalabilité indépendante du worker.
-  
-<hr style="width: 25%; margin: 50px auto;" />
-
-### ADR-003 : CQRS avec MediatR
-
-- **Statut** : accepté.
-- **Contexte** : séparer les cas d'usage de lecture (queries, souvent optimisés, DTO plats) des cas d'usage d'écriture (commands avec validation et règles métier).
-- **Décision** :  un handler MediatR par Command/Query, validation via FluentValidation en pipeline behavior.
-- **Conséquences** : plus de fichiers qu'une approche "service classique" mais chaque cas d'usage est isolé, testable unitairement et le code rese lisible même quand le projet grossit.
-
-<hr style="width: 25%; margin: 50px auto;" />
-
-### ADR-004 : Dégradation gracieuse en cas d'échec ou de latence IA
-
-- **Statut** : accepté
-- **Contexte** : un appel au LLM peut échouer ou traîner indéfiniment, le service de ticketing ne dois jamais dépendre de la disponibilité de l'IA pour fonctionner.
-- **Décision** : timeout de 10 secondes sur l'appel au LLM, un retry automatique (backoff 2s) puis abandon avec enregistrement d'audit. Le ticket reste pleinement utilisable en mode manuel en cas d'échec.
-- **Conséquences** : l'agent peut se retrouver sans suggestion IA sur certains tickets, cela reste acceptable mais le service principal, le ticketing n'est jamais bloqué par un tiers externe.
-
-### ADR-005 : Verrouillage optimiste pour la concurrence sur un ticket
-
-- **Statut** : accepté
-- **Contexte** : deux agents peuvent modifier le même ticket simultanément
-- **Options considérées** :
-  - Option 1 : verrouillage pessimiste, lock en base et complexité opérationnelle, risque de deadlock.
-  - Option 2 : verrouillage optimiste (`RowVersion`, `ConcurrencyToken` EF Core) standard, peu de code.
-  - Option 3 : indicateur de présence en temps réel (SignalR), meilleure UX mais infra supplémentaire non justifié pour un MVP
-- **Décision** : option 2 pour le MVP mais option 3 envisageable en V3.
-- **Conséquences** : en cas de modification concurrente, le second agent qui tente d'enregistrer ses changements reçoit une erreur de concurrence et doit recharger le ticket.
-
-### ADR-006 : Abstraction du fournisseur IA (`IAIAnalysisService`)
-
-- **Statut** : accepté
-- **Contexte** : projet mené sans budget, besoin de pouvoir utiliser un LLM gratuit ou local (Ollama, Mistral) pendant le développement, sans figer un fournisseur payant dans le code métier.
-- **Décision** : toute interaction avec un LLM passe par l'interface `IAIAnalysisService`, définie côté Application. L'implémentation concrète (Infrastructure) est substituable sans impact sur le reste du système.
-- **Conséquences** : léger surcoût de conception au départ mais permet de changer de fournisseur (Ollama en local, Mistral API, ou un fournisseur payant plus tard) sans toucher au Domain ni à l'Application. Facilite aussi les tests (mock de l'interface). Point d'attention RGPD, si un fournisseur externe est utilisé, où les données ne sortent jamais de la machine, cela constitue une sous-tratance de données à documenter dans les CGU.
-
+ 
+Chaque ADR est un fichier séparé dans [`docs/adr/`](adr/) (convention standard : un fichier par décision, numéroté) pour rester consultable et versionné indépendamment de ce document.
+ 
+| ADR | Décision |
+|---|---|
+| [0001](adr/0001-multi-tenant-strategy.md) | Stratégie multi-tenant, Single Database + Discriminator Column |
+| [0002](adr/0002-async-ai-processing.md) | Traitement IA asynchrone via message broker |
+| [0003](adr/0003-cqrs-mediatr.md) | CQRS avec MediatR |
+| [0004](adr/0004-ai-graceful-degradation.md) | Dégradation gracieuse en cas d'échec ou de latence IA |
+| [0005](adr/0005-optimistic-concurrency.md) | Verrouillage optimiste pour la concurrence sur un ticket |
+| [0006](adr/0006-ai-provider-abstraction.md) | Abstraction du fournisseur IA (`IAIAnalysisService`) |
+ 
 > D'autres ADR seront ajoutés au fil du développement (ex : mécanisme d'authentification, stratégie de cache, gestion des migrations EF Core en multi-tenant).
+Un nouveau fichier `000N-titre.md` à chaque nouvelle décision structurante.
+
+ 
+---
+
 
 ## 4. Flux clés (séquences)
 
@@ -278,18 +234,32 @@ sequenceDiagram
     Worker->>DB: Update Ticket.Priority (si sentiment critique)
 ```
 
+<hr style="width: 25%; margin: 50px auto;" />
+
+
 > Le client obtient une réponse immédiate, l'enrichissement IA arrive quelques secondes après, sans bloquer personne.
 
-## 5. Structure de solution .NET
+
+## 5. Structure de la solution
  
 ```
 SmartDeskAI/
 ├── src/
-│   
+│   ├── SmartDeskAI.Domain/           # Entités, Value Objects, règles métier pures
+│   ├── SmartDeskAI.Application/      # Commands, Queries, Handlers, interfaces
+│   ├── SmartDeskAI.Infrastructure/   # EF Core, repos, client LLM, RabbitMQ
+│   ├── SmartDeskAI.Api/              # Minimal API, controllers, mapping DTO
+│   ├── SmartDeskAI.Worker/           # Worker service consommant la queue IA
+│   └── SmartDeskAI.Web/              # Blazor WebAssembly
+├── tests/
+│   ├── SmartDeskAI.Domain.Tests/
+│   ├── SmartDeskAI.Application.Tests/
+│   └── SmartDeskAI.IntegrationTests/ # Dont tests d'isolation multi-tenant  
 ├── docs/
 │   ├── CahierDesChargesFonctionnel.md
 │   ├── ConceptionTechnique.md
 │   └── adr/
+│   └── images/
 ├── README.md
 └── SmartDeskAI.sln
 ```
