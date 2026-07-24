@@ -1,10 +1,10 @@
 <Solution>
+  <Folder Name="/adr/" />
   <Folder Name="/Éléments de solution/">
     <File Path=".gitignore" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/Éléments de solution/docs/">
-    <File Path="ConceptionTechnique.md" />
     <File Path="docs/CahierDesChargesFonctionnel.md" />
     <File Path="docs/ConceptionTechnique.md" />
   </Folder>

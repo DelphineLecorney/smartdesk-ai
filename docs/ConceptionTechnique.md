@@ -252,3 +252,44 @@ Un ADR documente une décision technique, son contexte et ses alternatives écar
 - **Conséquences** : léger surcoût de conception au départ mais permet de changer de fournisseur (Ollama en local, Mistral API, ou un fournisseur payant plus tard) sans toucher au Domain ni à l'Application. Facilite aussi les tests (mock de l'interface). Point d'attention RGPD, si un fournisseur externe est utilisé, où les données ne sortent jamais de la machine, cela constitue une sous-tratance de données à documenter dans les CGU.
 
 > D'autres ADR seront ajoutés au fil du développement (ex : mécanisme d'authentification, stratégie de cache, gestion des migrations EF Core en multi-tenant).
+
+## 4. Flux clés (séquences)
+
+### 4.1 Création d'un ticket avec analyse IA asynchrone
+
+```mermaid
+sequenceDiagram
+    actor Client
+    participant API
+    participant DB as Base de données
+    participant Bus as RabbitMQ
+    participant Worker as WOrker IA
+    participant LLM as Service LLM
+
+    Client ->>API: POST / tickets
+    API->>DB: INSERT Ticket (Status=NOuveau)
+    API->>Bus: Publie TicketCreatedEvent
+    API->>Client: 201 Created (ticket visible immédiatement)
+
+    Bus->>Worker: Consomme TicketCreatedEvent
+    Worker->>LLM: Analyse (catégorie, sentiment)
+    LLM-->>Worker: Résultat
+    Worker->>DB: Insert AIAnalysis
+    Worker->>DB: Update Ticket.Priority (si sentiment critique)
+```
+
+> Le client obtient une réponse immédiate, l'enrichissement IA arrive quelques secondes après, sans bloquer personne.
+
+## 5. Structure de solution .NET
+ 
+```
+SmartDeskAI/
+├── src/
+│   
+├── docs/
+│   ├── CahierDesChargesFonctionnel.md
+│   ├── ConceptionTechnique.md
+│   └── adr/
+├── README.md
+└── SmartDeskAI.sln
+```
