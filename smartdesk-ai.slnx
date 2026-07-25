@@ -1,4 +1,13 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartDeskAI.Application/SmartDeskAI.Application.csproj" />
+    <Project Path="src/SmartDeskAI.Domain/SmartDeskAI.Domain.csproj" />
+    <Project Path="src/SmartDeskAI.Infrastructure/SmartDeskAI.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartDeskAI.Domain.Tests/SmartDeskAI.Domain.Tests.csproj" />
+    <Project Path="tests/SmartDeskAI.IntegrationTests/SmartDeskAI.IntegrationTests.csproj" />
+  </Folder>
   <Folder Name="/Éléments de solution/">
     <File Path=".gitignore" />
     <File Path="README.md" />
