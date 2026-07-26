@@ -8,6 +8,7 @@
     {
         Invited = 0,
         Active = 1,
-        Deactivated = 2
+        Deactivated = 2,
+        Anonymized = 3
     }
 }

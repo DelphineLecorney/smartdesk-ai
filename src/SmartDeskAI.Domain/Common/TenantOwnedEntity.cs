@@ -12,7 +12,7 @@
         protected TenantOwnedEntity(Guid tenantId)
         {
             if (tenantId == Guid.Empty)
-                throw new ArgumentNullException("Le TenantId ne peut pas être vide", nameof(tenantId));
+                throw new ArgumentException("Le TenantId ne peut pas être vide", nameof(tenantId));
 
             TenantId = tenantId;
         }
