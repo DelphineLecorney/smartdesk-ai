@@ -17,6 +17,7 @@
     <File Path="docs/ConceptionTechnique.md" />
   </Folder>
   <Folder Name="/Éléments de solution/docs/adr/">
+    <File Path="0007-custom-authentication.md" />
     <File Path="docs/adr/0001-multi-tenant-strategy.md" />
     <File Path="docs/adr/0002-async-ai-processing.md" />
     <File Path="docs/adr/0003-cqrs-mediatr.md" />

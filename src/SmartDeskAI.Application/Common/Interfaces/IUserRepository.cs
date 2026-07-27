@@ -13,6 +13,8 @@ namespace SmartDeskAI.Application.Common.Interfaces
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken);
+        Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+        Task<List<User>> GetAllAsync(CancellationToken cancellationToken);
         Task AddAsync(User user, CancellationToken cancellationToken);
         Task SaveChangeAsync(CancellationToken cancellationToken);
     }

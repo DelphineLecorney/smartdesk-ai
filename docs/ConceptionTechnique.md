@@ -99,6 +99,7 @@ erDiagram
     TENANT ||--o{ TICKET : possede
     USER ||--o{ TICKET : assigne_a
     USER ||--o{ MESSAGE : redige
+    USER ||--o| USER_CREDENTIAL : authentifie_par
     TICKET ||--o{ MESSAGE : contient
     TICKET ||--o| AI_ANALYSIS : analyse_par
     TICKET ||--o{ ATTACHMENT : possede
@@ -118,6 +119,13 @@ erDiagram
         string Email
         string Role
         bool IsActive
+        datetime CreatedAt
+    }
+
+        USER_CREDENTIAL {
+        guid Id PK
+        guid UserId FK
+        string PasswordHash
         datetime CreatedAt
     }
 
@@ -185,6 +193,12 @@ modelBuilder.Entity<Ticket>()
 
 Le `_currentTenantService.TenantId` doit provenir **exclusivement** des claims du token d'authentification, jamais d'un paramètre de requête ou de route.
 
+<hr style="width: 25%; margin: 50px auto;" />
+
+### 2.3 Point d'attention : `UserCredential` n'est pas une entité du Domain
+
+`UserCredential` (voir ADR-0007) existe uniquement dans la couche Infrastructure. Elle ne porte aucune règle métier, juste `UserId` et `PasswordHash` et le Domain n'a aucune connaissance de son existence. C'est un choix délibéré : l'authentification est un détail technique, pas une règle métier, elle ne doit donc pas polluer l'entité `User` du Domain.
+
 ---
 
 ## 3. Architecture Decision Records (ADR)
@@ -201,6 +215,7 @@ Chaque ADR est un fichier séparé dans [`docs/adr/`](adr/) (convention standard
 | [0004](adr/0004-ai-graceful-degradation.md) | Dégradation gracieuse en cas d'échec ou de latence IA |
 | [0005](adr/0005-optimistic-concurrency.md) | Verrouillage optimiste pour la concurrence sur un ticket |
 | [0006](adr/0006-ai-provider-abstraction.md) | Abstraction du fournisseur IA (`IAIAnalysisService`) |
+| [0007](adr/0007-custom-authentication.md) | Authentification maison (mot de passe + JWT) plutôt qu'ASP.NET Core Identity |
  
 > D'autres ADR seront ajoutés au fil du développement (ex : mécanisme d'authentification, stratégie de cache, gestion des migrations EF Core en multi-tenant).
 Un nouveau fichier `000N-titre.md` à chaque nouvelle décision structurante.
