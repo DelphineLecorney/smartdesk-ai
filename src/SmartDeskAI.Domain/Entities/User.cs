@@ -49,8 +49,8 @@ namespace SmartDeskAI.Domain.Entities
 
             Status = UserStatus.Deactivated;
             DeactivatedAt = DateTime.UtcNow;
-        }
 
-        public bool CanLogIn() => Status == UserStatus.Active;
+            AddDomainEvent(new Events.UserDeactivatedEvent(Id, TenantId));
+        }             
     }
 }

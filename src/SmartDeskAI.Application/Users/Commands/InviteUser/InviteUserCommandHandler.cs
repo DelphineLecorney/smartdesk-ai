@@ -3,6 +3,11 @@ using SmartDeskAI.Domain.Entities;
 
 namespace SmartDeskAI.Application.Users.Commands.InviteUser
 {
+    /// <summary>
+    /// Gestionnaire de la commande d'invitation d'un utilisateur.
+    /// Vérifie l'unicité de l'adresse email au sein du Tenant courant,
+    /// instancie l'utilisateur et persiste le nouvel état.
+    /// </summary>
     public sealed class InviteUserCommandHandler
     {
         private readonly IUserRepository _userRepository;

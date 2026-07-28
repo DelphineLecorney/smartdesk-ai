@@ -3,6 +3,11 @@ using SmartDeskAI.Application.Common.Interfaces;
 
 namespace SmartDeskAI.Application.Users.Commands.ActivateUser;
 
+/// <summary>
+/// Gestionnaire de la commande d'activation d'un compte utilisateur.
+/// Orchestre la récupération de l'utilisateur, l'exécution de la règle d'activation
+/// et la persistance du changement d'état.
+/// </summary>
 public sealed class ActivateUserCommandHandler : IRequestHandler<ActivateUserCommand>
 {
     private readonly IUserRepository _userRepository;
