@@ -3,8 +3,8 @@ using SmartDeskAI.Domain.Enums;
 using SmartDeskAI.Domain.Exceptions;
 using SmartDeskAI.Domain.ValueObjects;
 
-namespace SmartDeskAI.Domain.Entities
-{
+namespace SmartDeskAI.Domain.Entities;
+
     /// <summary>
     /// Représente un utilisateur (Agent, Admin ou Client) rattaché à un Tenant.
     /// Gère le cycle de vie du compte (Invitation, Activation, Désactivation) et contrôle les droits d'accès.
@@ -51,6 +51,7 @@ namespace SmartDeskAI.Domain.Entities
             DeactivatedAt = DateTime.UtcNow;
 
             AddDomainEvent(new Events.UserDeactivatedEvent(Id, TenantId));
-        }             
+        }
+
+        public bool CanLogIn() => Status == UserStatus.Active;
     }
-}

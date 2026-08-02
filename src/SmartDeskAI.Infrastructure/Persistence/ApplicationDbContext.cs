@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SmartDeskAI.Application.Common.Interfaces;
 using SmartDeskAI.Domain.Entities;
+using SmartDeskAI.Domain.ValueObjects;
 
 namespace SmartDeskAI.Infrastructure.Persistence;
 
@@ -33,21 +34,21 @@ public sealed class ApplicationDbContext : DbContext
         {
             builder.HasKey(u => u.Id);
 
-            // Email est un Value Object, mappé comme propriété "owned",
-            // stocké dans une colonne simple sans exposer sa structure interne.
-            builder.OwnsOne(u => u.Email, email =>
-            {
-                email.Property(e => e.Value).HasColumnName("Email").IsRequired().HasMaxLength(320);
-            });
+            // Email reste un Value Object côté Domain mais est mappé comme une simple
+            // colonne string convertie (pas comme un type "owned" séparé) car EF Core 10
+            // ne supporte pas bien les index composites qui mélangent une propriété
+            // owned et une propriété du propriétaire (limitation levée seulement en EF Core 11).
+            builder.Property(u => u.Email)
+                .HasConversion(email => email.Value, value => Email.Create(value))
+                .HasColumnName("Email")
+                .IsRequired()
+                .HasMaxLength(320);
 
             builder.Property(u => u.TenantId).IsRequired();
 
-            // Filtre appliqué automatiquement à toute requête LINQ sur User.
             builder.HasQueryFilter(u => u.TenantId == _currentTenant.TenantId);
 
-            // Unicité de l'email par tenant (deux tenants différents peuvent
-            // avoir un utilisateur avec le même email, ce sont des comptes distincts).
-            builder.HasIndex("TenantId", "Email").IsUnique();
+            builder.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
         });
     }
 }
