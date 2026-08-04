@@ -22,7 +22,7 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-        optionsBuilder.UseSqlServer("Server=localhost;Database=SmartDeskAI;Trusted_Connection=True;TrustServerCertificate=True");
+        optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=SmartDeskAI;Trusted_Connection=True;MultipleActiveResultSets=true");
 
         return new ApplicationDbContext(optionsBuilder.Options, new DesignTimeTenantService());
     }
